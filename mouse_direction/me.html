@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title></title>
+<style type="text/css">
+
+.wrap {width: 300px;height: 200px;position: relative;background: green;top: 100px;left: 200px;overflow: hidden;}
+.inner {position: absolute;width: 100%;height: 100%;left: -100%;right: -100%;background: red;}
+
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="inner"></div>
+</div>
+
+<script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+<script>
+//http://blog.csdn.net/ajaxuser/article/details/7549661
+$('.wrap').on('mouseenter', function(e){
+
+  switch(getDirection(e)){
+
+    case 1:
+      $('.wrap').html('从上面进入');
+      break;
+
+    case 2:
+      $('.wrap').html('从左面进入');
+      break;
+
+    case 3:
+      $('.wrap').html('从下面进入');
+      break;
+
+    case 4:
+      $('.wrap').html('从右面进入');
+      break;
+
+  }
+
+});
+
+$('.wrap').on('mouseleave', function(e){
+
+  switch(getDirection(e)){
+
+    case 1:
+      $('.wrap').html('从上面离开');
+      break;
+
+    case 2:
+      $('.wrap').html('从左面离开');
+      break;
+
+    case 3:
+      $('.wrap').html('从下面离开');
+      break;
+
+    case 4:
+      $('.wrap').html('从右面离开');
+      break;
+
+  }
+
+});
+/*
+$('.wrap').on('mousemove', function(e){
+
+  console.log(getDirection(e));
+
+});
+*/
+function getDirection(e){
+
+  var k = $(e.target).height() / $(e.target).width();// k 是 y/x
+
+  //把鼠标的坐标转换到当前元素的自身坐标，元素的中心点为原点。
+  var x = e.pageX - $(e.target).offset().left - ($(e.target).width() / 2);
+  var y = e.pageY - $(e.target).offset().top - ($(e.target).height() / 2);
+  //反转y轴
+  y *= -1;
+
+  //1上 2左 3下 4右
+  if(y > x * k){//在直线y=kx上面
+    if(y > -k * x){//在直线y=-kx上面
+      return 1;
+    }else{
+      return 2;
+    }
+  }else{
+    if(y > -k * x){//在直线y=-kx上面
+      return 4;
+    }else{
+      return 3;
+    }
+  }
+
+}
+
+
+/*
+$('.wrap').on('mouseover', function(e){
+
+  console.log(e);
+
+});
+
+$('.wrap').on('mouseout', function(e){
+
+  console.log(e);
+
+});
+*/
+
+</script>
+</body>
+</html>

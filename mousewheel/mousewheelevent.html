@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<!-- http://www.jb51.net/article/23722.htm -->
+<html>
+<head>
+<title>鼠标滚轮</title>
+<meta charset="utf-8" />
+<style type="text/css">
+body {padding: 10px 100px;}
+#custom-scrollbar {border:3px solid #7d99d6;width: 420px;overflow: hidden;}
+#custom-scrollbar #wrap {width:400px;height:300px;overflow:hidden;position:relative;float: left;}
+#custom-scrollbar #inner {position:absolute; left:0; top:0; padding:4px;}
+#custom-scrollbar #slider {width: 20px;height: 300px;background: #eee;position: relative;float: left;}
+#custom-scrollbar #slider-bar {width: 14px;height: 50px;background: #ccc;position: absolute;left: 3px;top: 0;cursor: default;}
+</style>
+</head>
+<body>
+
+  <h2>文本框增加/减少</h2>
+  <div>
+    <input type="text" value="300" id="number" />
+    <span>文本框获得焦点后滚动鼠标滚轮</span>
+  </div>
+
+  <h2>鼠标滚动缩放图片</h2>
+  <div>
+    <img id="img" style="cursor:-moz-zoom-in" title="鼠标滚动 缩放大小" src="http://pic.service.yaolan.com/32/20150212/120/1423734204920_1_o.jpg" />
+  </div>
+
+  <h2>自定义滚动</h2>
+
+  <div id="custom-scrollbar">
+    <div id="wrap">
+      <div id="inner">
+          0<br/>1<br/>2<br/>3<br/>4<br/>5<br/>6<br/>7<br/>8<br/>9<br/>0<br/>1<br/>2<br/>3<br/>4<br/>5<br/>6<br/>7<br/>8<br/>9<br/>0<br/>1<br/>2<br/>3<br/>4<br/>5<br/>6<br/>7<br/>8<br/>9<br/>0<br/>1<br/>2<br/>3<br/>4<br/>5<br/>6<br/>7<br/>8<br/>9<br/>0<br/>1<br/>2<br/>3<br/>4<br/>5<br/>6<br/>7<br/>8<br/>123456789
+      </div>
+    </div>    
+    <div id="slider">
+      <div id="slider-bar">
+      </div>
+    </div>
+  </div>
+
+<script type="text/javascript">
+
+  wheel(document.getElementById("number"), function(e){
+    this.value = (Number(this.value) || 0) + e.delta;
+    this.select();
+    preventDefault(e);
+  });
+
+  wheel(document.getElementById("img"), function(e){
+    this.style.width = this.offsetWidth + e.delta + "px";
+    this.style.height = this.offsetHeight + e.delta + "px";
+    preventDefault(e);
+  });
+
+
+  var wrap = document.getElementById("wrap");
+  var inner = document.getElementById("inner");
+
+  var slider = document.getElementById("slider");
+  var sliderBar = document.getElementById("slider-bar");
+
+  var scrollMax = slider.offsetHeight - sliderBar.offsetHeight;
+
+  //滚轮事件
+  wheel(document.getElementById("custom-scrollbar"), function(e){
+
+    var t = range(sliderBar.offsetTop + (-1 * e.delta * 10), scrollMax, 0);
+
+    sliderBar.style.top = t + 'px';
+
+    var scale= t / scrollMax;
+
+    inner.style.top = - scale * (inner.offsetHeight - wrap.offsetHeight) + 'px';
+
+    console.log(e.delta);
+    console.log(sliderBar.offsetTop);
+    console.log(0 == sliderBar.offsetTop && e.delta == -1);
+    console.log(0 < sliderBar.offsetTop && sliderBar.offsetTop < scrollMax);
+
+    if(0 < sliderBar.offsetTop && sliderBar.offsetTop < scrollMax){
+      preventDefault(e);
+    }
+
+    if(0 == sliderBar.offsetTop && e.delta == -1){
+      preventDefault(e);
+    }
+
+    if(scrollMax == sliderBar.offsetTop && e.delta == 1){
+      preventDefault(e);
+    }
+
+  });
+
+  //鼠标拖动事件
+  var isOnSliderBarClick = false;
+  var disY = 0;
+
+  addEvent(sliderBar, 'mousedown', function(e){
+
+    isOnSliderBarClick = true;
+
+    disY = e.clientY - sliderBar.offsetTop;
+
+  });
+
+  addEvent(document, 'mousemove', function(e){
+
+    if(!isOnSliderBarClick){
+      return;
+    }
+
+    preventDefault(e);
+
+    var t = range(e.clientY - disY, scrollMax, 0);
+
+    sliderBar.style.top = t + 'px';
+
+    var scale= t / scrollMax;
+
+    inner.style.top = - scale * (inner.offsetHeight - wrap.offsetHeight) + 'px';
+
+  });
+
+  addEvent(document, 'mouseup', function(){
+    isOnSliderBarClick = false;
+  });
+
+  function calcBarHeight(){
+
+    var minHeight = 17;
+
+  }
+
+  function wheel(obj, callback){
+
+    var wheelType = "mousewheel";
+
+    try{
+      document.createEvent("MouseScrollEvents");
+      wheelType = "DOMMouseScroll";
+    }catch(e){}
+
+    addEvent(obj, wheelType, function(event){
+      if("wheelDelta" in event){//统一为加减120，其中正数表示向上滚动,负数表示向下滚动
+        var delta = event.wheelDelta;
+        //opera 9x系列的滚动方式与IE保持一致， IE10后修正
+        if(window.opera && opera.version() < 10){
+          delta = -delta;
+        }
+        //由于事件对象的原有属性是只读，我们只能通过添加一个私有属性的delta来解决兼容问题
+        event.delta = Math.round(delta) / 120;//修正Safari的浮点bug
+      }else if("detail" in event){
+        event.wheelDelta = -event.detail * 40;//为FF添加更大众化的wheelDelta
+        event.delta = event.wheelDelta / 120;
+      }
+      callback.call(obj, event);//修正IEthis指向
+    });
+  };
+
+  function addEvent(el, type, callback, userCapture){
+    if(el.dispatchEvent){//W3C方式优先
+      el.addEventListener(type, callback, !!userCapture);
+    }else{
+      el.attachEvent("on"+type, callback);
+    }
+    return callback;
+  }
+
+  function preventDefault(e){
+    if(e.preventDefault){
+      e.preventDefault();
+    }
+    e.returnValue = false;
+  }
+
+  function range(num, max, min){
+    return Math.min(max, Math.max(num, min));
+  }
+
+</script>
+
+
+<h1>第二份例子</h1>
+
+<p><label for="wheelDelta">滚动值:</label>(IE/Opera)<input type="text" id="wheelDelta" /></p>
+<p><label for="detail">滚动值:(Firefox)</label><input type="text" id="detail" /></p>
+<script type="text/javascript">
+/***********************
+* 函数：判断滚轮滚动方向
+* 作者：walkingp
+* 参数：event 
+* 返回：滚轮方向 1：向上 -1：向下
+*************************/
+var scrollFunc=function(e){
+  var direct = 0;
+  e = e || window.event;
+
+  var t1=document.getElementById("wheelDelta");
+  var t2=document.getElementById("detail");
+  if(e.wheelDelta){//IE/Opera/Chrome
+    t1.value=e.wheelDelta;
+  }else if(e.detail){//Firefox
+    t2.value=e.detail;
+  }
+  //ScrollText(direct);
+};
+/*注册事件*/
+if(document.addEventListener){
+  document.addEventListener('DOMMouseScroll',scrollFunc,false);
+}//W3C
+window.onmousewheel=document.onmousewheel=scrollFunc;//IE/Opera/Chrome
+</script>
+
+
+
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+
+
+
+
+
+</body>
+</html>
